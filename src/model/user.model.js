@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
-    user: {
+    name: {
       type: String,
       required: true,
     },
@@ -17,7 +17,7 @@ const userSchema = new Schema(
       required: true,
     },
     post: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Blog",
     },
     refreshToken: {
@@ -34,7 +34,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password); 
 };
 
 userSchema.methods.generateRefreshToken = async function () {
@@ -49,6 +49,7 @@ userSchema.methods.generateRefreshToken = async function () {
 userSchema.methods.generateAccessToken = async function () {
   return jwt.sign(
     {
+      _id: this._id,
       name: this.name,
       email: this.email,
     },

@@ -13,6 +13,7 @@ router.route("/registration").post(registration);
 router.route("/logIn").post(login);
 
 router.route("/logOut").post(logout);
-router.route("/test").get(authMiddleware ,test);
+
+router.route("/test").get(authMiddleware, test);
 
 export default router;

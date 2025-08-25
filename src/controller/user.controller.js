@@ -1,5 +1,6 @@
 import { User } from "../model/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { formattedName } from "../utils/textFormater.js";
 
 const registration = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -24,13 +25,10 @@ const registration = asyncHandler(async (req, res) => {
     throw new Error("Invalid Password");
   }
 
-  const formattedName = name
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
+  const formatedName = formattedName(name);
 
   const newUser = await User.create({
-    user: formattedName,
+    name: formatedName,
     email: email.toLowerCase(),
     password: password,
   });
@@ -109,19 +107,17 @@ const logout = asyncHandler(async (req, res) => {
   };
 
   return res
-    .staus(200)
+    .status(200)
     .clearCookie("accessToken", opt)
     .clearCookie("refreshToken", opt)
     .json({ msg: "Logout successfully" });
 });
 
 const test = async (req, res) => {
-  const user = await User.findById(req.user?._id);
-  console.log(req.user?._id);
-  console.log(user);
-  
-  
+  const user = await User.findById(req.user?._id).select(
+    "-password -refreshToken"
+  );
   if (!user) throw new Error("user not found");
   return res.status(200).json({ msg: "user still loggedIn", user });
 };
-export { registration, login, logout, test }; 
+export { registration, login, logout, test };
