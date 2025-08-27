@@ -4,19 +4,20 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { formattedName } from "../utils/textFormater.js";
 
 const createBlogost = asyncHandler(async (req, res) => {
-  let { title, content, tags } = req.body;
+  const { title, content, tags } = req.body;
   if (!title || !content || !tags)
     throw new Error("Title, content and tags must needed");
-  content = content.toString();
-  title = formattedName(title);
+  const finalContent = content.trim().toString();
+  const finalTitle = title.trim().toString();
+  if (title.length > 100) throw new Error("Title is too long");
 
   let splittedTags = tags.trim().split(" ");
   if (!splittedTags.every((tag) => /^#[^#].*/.test(tag)))
     throw new Error("Tag must start with Hashtag");
 
   const createBlog = await Blog.create({
-    content: content,
-    title: title,
+    content: finalContent,
+    title: finalTitle,
     likes: [],
     owner: req.user?._id,
     tags: splittedTags,
@@ -42,8 +43,6 @@ const updateBlogPost = asyncHandler(async (req, res) => {
   if (content) content = content.toString();
   if (title) title = formattedName(title);
 
-  console.log(content, title);
-
   const blog = await Blog.find({ _id: blogId, isDeleted: false });
   if (!blog) throw new Error("Blog not found");
 
@@ -61,7 +60,6 @@ const updateBlogPost = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log("updatedBlog", updatedBlog);
   if (!updatedBlog)
     throw new Error("Blog can't update due to internal server error");
 
@@ -83,19 +81,53 @@ const deleteBlogPost = asyncHandler(async (req, res) => {
     { new: true }
   );
   if (blog.isDeleted !== true) throw new Error("Deletion problem occur");
-  console.log(blog);
   return res.status(200).json({
     msg: "Blog post deleted successfully",
     blog,
   });
 });
 
+const getBlogPostById = asyncHandler(async (req, res) => {
+  const { blogId } = req.params;
+  const findedBlog = await Blog.find({ _id: blogId }).populate([
+    {
+      path: "owner",
+      select: "name email",
+    },
+    {
+      path: "comment",
+      select: "comment owner",
+      match: { isDeleted: false },
+    },
+    // {
+    //   path: "likes",
+    //   select: "owner",
+    // },
+  ]);
+  if (!findedBlog) throw new Error("Blog not found");
+  return res.status(200).json({ msg: "Here's your blog", findedBlog });
+});
+
 const getAllBlogPost = asyncHandler(async (req, res) => {
   const { userId } = req.params;
+  const findedUser = await User.findById(userId);
+  if (!findedUser) throw new Error("User not found");
+
   const allBlogs = await Blog.find({
-    owner: userId,
+    owner: findedUser?._id,
     isDeleted: false,
-  }).populate({ path: "owner", select: "name email" });
+  }).populate([
+    { path: "owner", select: "name email" },
+    {
+      path: "comment",
+      select: "comment",
+      match: {
+        isDeleted: false,
+      },
+      populate: { path: "owner", select: "name email" },
+    },
+  ]);
+
   if (!allBlogs) throw new Error("No post found");
   if (!allBlogs.length) {
     return res.status(200).json({ msg: "No post found" });
@@ -105,4 +137,11 @@ const getAllBlogPost = asyncHandler(async (req, res) => {
     allBlogs,
   });
 });
-export { createBlogost, updateBlogPost, deleteBlogPost, getAllBlogPost };
+
+export {
+  createBlogost,
+  updateBlogPost,
+  deleteBlogPost,
+  getBlogPostById,
+  getAllBlogPost,
+};

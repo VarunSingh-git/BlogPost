@@ -16,7 +16,18 @@ const blogSchema = new Schema(
         required: true,
       },
     ],
-    likes: [{ type: Schema.Types.ObjectId, ref: "Like" }],
+    likes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Like",
+      },
+    ],
+    comment: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",

@@ -8,10 +8,12 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
 
-import userRoute from "../Backend/src/routes/user.routes.js";
-import blogRoute from "../Backend/src/routes/blog.routes.js";
+import userRoute from "../11. Blog_Post/src/routes/user.routes.js";
+import blogRoute from "../11. Blog_Post/src/routes/blog.routes.js";
+import commentRoute from "../11. Blog_Post/src/routes/comment.routes.js";
 
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
+app.use("/api/v1/comment", commentRoute);
 
 export default app;
