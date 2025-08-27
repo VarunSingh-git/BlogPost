@@ -1,19 +1,22 @@
 import { Router } from "express";
 import {
-  createBlogost,
+  createBlogPost,
   updateBlogPost,
   deleteBlogPost,
+  publishToggle,
   getAllBlogPost,
   getBlogPostById,
 } from "../controller/blog.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 const router = Router();
 
-router.route("/createBlog").post(authMiddleware, createBlogost);
+router.route("/createBlog").post(authMiddleware, createBlogPost);
 
 router.route("/updateBlog/:blogId").patch(authMiddleware, updateBlogPost);
 
 router.route("/deleteBlog/:blogId").patch(authMiddleware, deleteBlogPost);
+
+router.route("/publishToggle/:blogId").patch(authMiddleware, publishToggle);
 
 router.route("/getAllBlog/:userId").get(authMiddleware, getAllBlogPost);
 

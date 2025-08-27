@@ -1,4 +1,4 @@
-import mongoose, { Schema, model } from "mongoose";
+import { Schema, model } from "mongoose";
 
 const blogSchema = new Schema(
   {
@@ -28,6 +28,10 @@ const blogSchema = new Schema(
         ref: "Comment",
       },
     ],
+    isDrafted: {
+      type: Boolean,
+      default: true,
+    },
     owner: {
       type: Schema.Types.ObjectId,
       ref: "User",

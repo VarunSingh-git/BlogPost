@@ -3,7 +3,7 @@ import { User } from "../model/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { formattedName } from "../utils/textFormater.js";
 
-const createBlogost = asyncHandler(async (req, res) => {
+const createBlogPost = asyncHandler(async (req, res) => {
   const { title, content, tags } = req.body;
   if (!title || !content || !tags)
     throw new Error("Title, content and tags must needed");
@@ -43,7 +43,11 @@ const updateBlogPost = asyncHandler(async (req, res) => {
   if (content) content = content.toString();
   if (title) title = formattedName(title);
 
-  const blog = await Blog.find({ _id: blogId, isDeleted: false });
+  const blog = await Blog.find({
+    _id: blogId,
+    isDeleted: false,
+    isDrafted: false,
+  });
   if (!blog) throw new Error("Blog not found");
 
   if (blog.title === title && blog.content === content)
@@ -69,7 +73,7 @@ const updateBlogPost = asyncHandler(async (req, res) => {
 const deleteBlogPost = asyncHandler(async (req, res) => {
   const { blogId } = req.params;
 
-  const findedBlog = await Blog.findById(blogId);
+  const findedBlog = await Blog.findOne({ _id: blogId, isDrafted: false });
   if (!findedBlog) throw new Error("Blog not found");
   const blog = await Blog.findByIdAndUpdate(
     blogId,
@@ -87,9 +91,44 @@ const deleteBlogPost = asyncHandler(async (req, res) => {
   });
 });
 
+const publishToggle = asyncHandler(async (req, res) => {
+  const { blogId } = req.params;
+  const findedBlog = await Blog.findOne({ _id: blogId, isDeleted: false });
+  if (!findedBlog) throw new Error("Blog not found");
+
+  if (findedBlog?.isDrafted === true) {
+    const publishedBlog = await Blog.findByIdAndUpdate(
+      findedBlog?._id,
+      { isDrafted: false },
+      { new: true }
+    ).populate([
+      { path: "owner", select: "name email" },
+      {
+        path: "comment",
+        select: "comment",
+        populate: { path: "owner", select: "name email" },
+      },
+    ]);
+    if (!publishedBlog) throw new Error("Published failed");
+    return res.status(200).json({ msg: "Blog Published", publishedBlog });
+  } else {
+    const unpublishedBlog = await Blog.findByIdAndUpdate(
+      findedBlog?._id,
+      { isDrafted: true },
+      { new: true }
+    );
+    if (!unpublishedBlog) throw new Error("Unpublished failed");
+    return res.status(200).json({ msg: "Blog Unpublished", unpublishedBlog });
+  }
+});
+
 const getBlogPostById = asyncHandler(async (req, res) => {
   const { blogId } = req.params;
-  const findedBlog = await Blog.find({ _id: blogId }).populate([
+  const findedBlog = await Blog.findOne({
+    _id: blogId,
+    isDrafted: false,
+    isDeleted: false,
+  }).populate([
     {
       path: "owner",
       select: "name email",
@@ -98,11 +137,18 @@ const getBlogPostById = asyncHandler(async (req, res) => {
       path: "comment",
       select: "comment owner",
       match: { isDeleted: false },
+      populate: { path: "owner", select: "name email" },
     },
-    // {
-    //   path: "likes",
-    //   select: "owner",
-    // },
+    {
+      path: "likes",
+      select: "owner",
+      populate: [
+        {
+          path: "owner",
+          select: "name email",
+        },
+      ],
+    },
   ]);
   if (!findedBlog) throw new Error("Blog not found");
   return res.status(200).json({ msg: "Here's your blog", findedBlog });
@@ -116,6 +162,7 @@ const getAllBlogPost = asyncHandler(async (req, res) => {
   const allBlogs = await Blog.find({
     owner: findedUser?._id,
     isDeleted: false,
+    isDrafted: false,
   }).populate([
     { path: "owner", select: "name email" },
     {
@@ -139,9 +186,10 @@ const getAllBlogPost = asyncHandler(async (req, res) => {
 });
 
 export {
-  createBlogost,
+  createBlogPost,
   updateBlogPost,
   deleteBlogPost,
+  publishToggle,
   getBlogPostById,
   getAllBlogPost,
 };

@@ -11,9 +11,11 @@ app.use(cookieParser());
 import userRoute from "../11. Blog_Post/src/routes/user.routes.js";
 import blogRoute from "../11. Blog_Post/src/routes/blog.routes.js";
 import commentRoute from "../11. Blog_Post/src/routes/comment.routes.js";
+import likeRoute from "../11. Blog_Post/src/routes/like.routes.js";
 
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/blog", blogRoute);
 app.use("/api/v1/comment", commentRoute);
+app.use("/api/v1/like", likeRoute);
 
 export default app;

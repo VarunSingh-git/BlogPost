@@ -8,21 +8,25 @@ const registration = asyncHandler(async (req, res) => {
     throw new Error("Invalid Credentials");
   }
 
-  const isUserExist = await User.findOne({ name, email });
+  const isUserExist = await User.findOne({ email: email.toLowerCase() });
   if (isUserExist)
     throw new Error("User already registered with this creadentials");
-  if (typeof name !== "string" && name.trim().length < 2) {
+  if (typeof name !== "string" || name.trim().length < 2) {
     throw new Error("Invalid Name");
   }
   if (
-    (typeof email !== "string" && email.trim().startsWith("@")) ||
+    typeof email !== "string" ||
+    email.trim().startsWith("@") ||
     email.trim().endsWith("@") ||
     !email.includes("@")
   ) {
     throw new Error("Invalid Email");
   }
-  if (typeof password !== "string" && password.length !== 8) {
-    throw new Error("Invalid Password");
+  if (typeof password !== "string" || password.length < 8) {
+    console.log(`1 ${typeof password !== "string"}`);
+    console.log(`2 ${password.length >= 8}`);
+
+    throw new Error("Password must be at least 8 character long");
   }
 
   const formatedName = formattedName(name);
@@ -120,4 +124,5 @@ const test = async (req, res) => {
   if (!user) throw new Error("user not found");
   return res.status(200).json({ msg: "user still loggedIn", user });
 };
+
 export { registration, login, logout, test };

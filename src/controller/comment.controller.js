@@ -7,7 +7,11 @@ const createComment = asyncHandler(async (req, res) => {
   const { blogId } = req.params;
 
   if (!content) throw new Error("Comment section is empty");
-  const findedBlog = await Blog.findById(blogId);
+  const findedBlog = await Blog.find({
+    _id: blogId,
+    isDeleted: false,
+    isDrafted: false,
+  });
   if (!findedBlog) throw new Error("Blog not found");
 
   const comment = await Comment.create({
@@ -58,4 +62,30 @@ const deleteComment = asyncHandler(async (req, res) => {
   });
 });
 
-export { createComment, deleteComment };
+const getAllCommentByPost = asyncHandler(async (req, res) => {
+  const { blogId } = req.params;
+  if (!blogId) throw new Error("Please Blog _id");
+  const blog = await Blog.findOne({
+    _id: blogId,
+    isDeleted: false,
+    isDrafted: false,
+  });
+  if (!blog) throw new Error("No blog found");
+  const allComments = await Blog.find({ _id: blog?._id })
+    .populate([
+      {
+        path: "comment",
+        select: "comment",
+        match: { isDeleted: false },
+        populate: {
+          path: "owner",
+          select: "name email",
+        },
+      },
+      { path: "owner", select: "name email" },
+    ])
+    .select("-likes");
+  return res.status(200).json({ msg: "All comments fetched", allComments });
+});
+
+export { createComment, deleteComment, getAllCommentByPost };

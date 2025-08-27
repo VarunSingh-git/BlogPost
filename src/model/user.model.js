@@ -11,14 +11,12 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
+      lowercase: true,
     },
     password: {
       type: String,
       required: true,
-    },
-    post: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Blog",
     },
     refreshToken: {
       type: String,
@@ -34,7 +32,7 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return await bcrypt.compare(password, this.password); 
+  return await bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateRefreshToken = async function () {
