@@ -93,7 +93,11 @@ const deleteBlogPost = asyncHandler(async (req, res) => {
 
 const publishToggle = asyncHandler(async (req, res) => {
   const { blogId } = req.params;
-  const findedBlog = await Blog.findOne({ _id: blogId, isDeleted: false });
+  const findedBlog = await Blog.findOne({
+    _id: blogId,
+    isDeleted: false,
+    owner: req.user?._id,
+  });
   if (!findedBlog) throw new Error("Blog not found");
 
   if (findedBlog?.isDrafted === true) {
@@ -120,6 +124,24 @@ const publishToggle = asyncHandler(async (req, res) => {
     if (!unpublishedBlog) throw new Error("Unpublished failed");
     return res.status(200).json({ msg: "Blog Unpublished", unpublishedBlog });
   }
+});
+
+const searchPost = asyncHandler(async (req, res) => {
+  const { search } = req.query;
+
+  const searchedContent = await Blog.find({
+    isDrafted: false,
+    isDeleted: false,
+    $or: [
+      { tags: { $regex: search, $options: "i" } },
+      { title: { $regex: search, $options: "i" } },
+    ],
+  });
+  console.log(searchedContent);
+  if (!searchedContent) {
+    throw new Error("No content found");
+  }
+  return res.status(200).json({ msg: "Searched data...", searchedContent });
 });
 
 const getBlogPostById = asyncHandler(async (req, res) => {
@@ -192,4 +214,5 @@ export {
   publishToggle,
   getBlogPostById,
   getAllBlogPost,
+  searchPost,
 };

@@ -23,9 +23,6 @@ const registration = asyncHandler(async (req, res) => {
     throw new Error("Invalid Email");
   }
   if (typeof password !== "string" || password.length < 8) {
-    console.log(`1 ${typeof password !== "string"}`);
-    console.log(`2 ${password.length >= 8}`);
-
     throw new Error("Password must be at least 8 character long");
   }
 
@@ -49,7 +46,6 @@ const registration = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  console.log("req.body", req.body);
 
   if (!email || !password) {
     throw new Error("Please enter valid creadentials for login");
@@ -57,13 +53,11 @@ const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     email,
   });
-  console.log("user", user);
 
   if (!user) throw new Error("User not found");
 
   const checkPassword = await user.isPasswordCorrect(password);
   if (!checkPassword) throw new Error("Password is incorrect");
-  console.log("checkPassword", checkPassword);
 
   const accessToken = await user.generateAccessToken();
   const refreshToken = await user.generateRefreshToken();
@@ -71,7 +65,6 @@ const login = asyncHandler(async (req, res) => {
   const loggedInUser = await User.findById(user?._id).select(
     "-password -refreshToken"
   );
-  console.log("loggedInUser", loggedInUser);
 
   if (!loggedInUser)
     throw new Error("Error while login process please try again...!");

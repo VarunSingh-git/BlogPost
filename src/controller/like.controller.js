@@ -10,7 +10,6 @@ const toggleLike = asyncHandler(async (req, res) => {
     blog: blogId,
     owner: req.user?._id,
   });
-  console.log(",", existedLike);
 
   if (existedLike) {
     const existedLikes_id = existedLike?._id;
@@ -91,7 +90,6 @@ const toggleLike = asyncHandler(async (req, res) => {
         select: "name email",
       },
     ]);
-    console.log(`confirmLikes: ${confirmLikes}`);
     if (!confirmLikes) throw new Error("Like couldn't completed");
     return res.status(200).json({ msg: "Like success", confirmLikes });
   }
